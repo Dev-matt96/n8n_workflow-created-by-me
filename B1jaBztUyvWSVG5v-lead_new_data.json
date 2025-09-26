@@ -1,0 +1,222 @@
+{
+  "name": "lead new data",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "15BErZeKs_xZMRzstdGemy_42_uMp9oO2FouyN_1YjFk",
+          "mode": "list",
+          "cachedResultName": "Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15BErZeKs_xZMRzstdGemy_42_uMp9oO2FouyN_1YjFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 745418258,
+          "mode": "list",
+          "cachedResultName": "lead-v2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15BErZeKs_xZMRzstdGemy_42_uMp9oO2FouyN_1YjFk/edit#gid=745418258"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $today }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "79da5a2c-2623-4aa5-b3dc-912644568ac9",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frjVGhLuR4fBeDAL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "e982fe39-c067-4e1f-9341-cdab58ddec78",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4e86c13d-76c1-4bad-adcb-4424551fedaf",
+              "leftValue": "={{ $json.Called }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "69b0c4d1-ae77-4c78-a513-da98db6ed360",
+              "leftValue": "={{ $json.Rejected }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "02372409-f52f-4bbe-b688-c48b49df03b7",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "sendTo": "business.matthewbrian96@gmail.com",
+        "subject": "Running test for getting leads",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "18162fba-eeeb-4f1f-bd4c-0c2617696de8",
+      "name": "Send a message",
+      "webhookId": "7a763dd8-65e5-4abe-986c-e9b935fb8222",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "61fAJktxpN5lGcGF",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert input data into ONE plain text field\n// Each person is formatted and separated by a single line break\n\nconst getPeople = () => {\n  // Case: your exact structure -> single item with a \"data\" array\n  if (items.length === 1 && items[0].json && Array.isArray(items[0].json.data)) {\n    return items[0].json.data;\n  }\n  // Fallback: each incoming item is one person\n  return items.map(i => i.json);\n};\n\nconst people = getPeople();\n\nconst blocks = people.map(p => {\n  const name = `${p[\"First name\"] ?? \"\"} ${p[\"Last name\"] ?? \"\"}`.trim();\n  return `Name: ${name}\nEmail: ${p[\"Email\"] ?? \"\"}\nBudget: ${p[\"Budget\"] ?? \"\"}\nMessage: Hi`;\n});\n\nconst text = blocks.join(\"\\n\"); // single line break between people\n\nreturn [\n  {\n    json: { text }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "236738e0-96fd-40bd-bfbe-f5c7a2b7854f",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9ed5779c-7d9c-4ab6-a18a-81f6c21e4dda",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
